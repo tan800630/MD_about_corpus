@@ -1,0 +1,38 @@
+%搜尋資料夾內檔案
+file_all=dir('I:\語料分析程式\中研院平衡語料庫Sinica corpus\done_ANSI');
+
+
+%dictionary有問題   需要放入單字!?
+dictionary_list=textscan(fopen('I:\語料分析程式\中研院平衡語料庫Sinica corpus\dictionary_ASBC.txt'),'%s');
+
+%開啟主要的文本檔案
+fid=fopen('I:\語料分析程式\中研院平衡語料庫Sinica corpus\data_CTM\CTM_text.txt','w');
+
+for i=1:(size(file_all,1)-2)
+    file_name=['I:\語料分析程式\中研院平衡語料庫Sinica corpus\done_ANSI','\',file_all(i+2).name];
+    fid2=fopen(file_name);
+    dat=textscan(fid2,'%s','bufsize',1000000);
+    
+    spac=regexp(dat{1,1}{1,1},'(　)');
+    
+    for j=1:(size(spac,2)-1)
+        
+        a=0;
+        for k=1:size(dictionary_list{1,1},1)
+            if strfind(dictionary_list{1,1}{k,1},dat{1,1}{1,1}((spac(1,j)+1):(spac(1,(j+1))-1)))==1
+                if size(dictionary_list{1,1}{k,1},2)==size(dat{1,1}{1,1}((spac(1,j)+1):(spac(1,(j+1))-1)),2)
+                fprintf(fid,'%d\r\n',k);
+                a=1;
+                end;
+            end;
+        end;
+            if a==0;
+                fprintf(fid,'0\r\n');
+            end;
+    end;
+
+    fclose(fid2);
+    
+end;
+
+fclose('all');
