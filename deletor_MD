@@ -1,0 +1,69 @@
+%搜尋資料夾內檔案
+file_all=dir('D:\Tan\語料分析程式\中研院平衡語料庫Sinica corpus\ASBC');
+
+%設定輸出路徑，建立資料夾
+out_dir='D:\Tan\語料分析程式\中研院平衡語料庫Sinica corpus\done_ANSI';
+
+if exist(out_dir)==0
+  mkdir(out_dir);
+end
+
+for i=1:(size(file_all,1)-2)
+    file_name=['D:\Tan\語料分析程式\中研院平衡語料庫Sinica corpus\ASBC','\',file_all(i+2).name];
+    dat=textscan(fopen(file_name),'%s');
+
+    text_box_all={};
+    text_box={};
+    %line_box為紀錄檔案中句子位置的參數，若下一個搜尋到的句子離上一句太遠代表其為下一篇文章
+    line_box=0;
+    
+    
+    for j=1:(size(dat{1,1})-1)
+    %單一行
+    col=dat{1,1}{j,1};
+
+    %挑出真的是句子的部分才做計算   (需要再做分隔不同文章的標記)
+    if dat{1,1}{(j+1),1}(1)=='*'
+        if (j-line_box)~=2
+                text_box_all={text_box_all{:,:},text_box};
+                text_box={};
+        end;
+
+        %check是否這句已結束
+        if size(regexp(dat{1,1}{(j+1),1}(1),'*'),1)~=1
+            col=[col,' ',dat{1,1}{(j+1),1}];
+            line_box=j+1;
+        else
+            line_box=j;
+        end;
+
+            c_sent=regexprep(col,'(+[\w\s]+\)','');
+            c_sent2=regexprep(c_sent,'（+[\w\s,u4e00-u9fa5]+\）','');
+            c_sent3=regexprep(c_sent2,'[+[\+\w\s,u4e00-u9fa5]+\]','');
+            c_sent4=regexprep(c_sent3,'（+[\+\w\s,u4e00-u9fa5]','');
+            c_sent5=regexprep(c_sent4,'[\+\w\s,u4e00-u9fa5]+\）','');
+            c_sent6=regexprep(c_sent5,'\[+[\+\w\s,u4e00-u9fa5]','');
+            c_sent7=regexprep(c_sent6,'[\+\w\s,u4e00-u9fa5]+\]','');
+            %去除英文字、阿拉伯數字
+            c_sent8=regexprep(c_sent7,'[a-z,A-Z,\d,Ａ-Ｚ]','');
+            text_box=[text_box;{c_sent8}];
+            
+    end;
+
+    end;
+        %最後一段文章也要進去
+        text_box_all={text_box_all{:,:},text_box};
+
+    
+    %將檔案輸出
+    for j=2:size(text_box_all,2)
+        out_name=[out_dir,'\',file_all(i+2).name,'_',num2str(j-1),'.txt'];
+        fid=fopen(out_name,'w','n');
+        for k=1:size(text_box_all{1,j},1)
+            %寫入檔案，把重複的部分刪掉(從4開始)
+            fprintf(fid,'%s',text_box_all{1,j}{k,1}(4:size(text_box_all{1,j}{k,1},2)));
+        end;
+        fclose(fid);
+    end;
+    fclose('all');
+end;
